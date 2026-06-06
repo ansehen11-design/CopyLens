@@ -262,11 +262,19 @@ async function startOcrForSelection(): Promise<void> {
   // 等待 150ms 让页面完成重绘
   await delay(150);
 
+  // 大区域提示
+  const isLarge = rect.width > window.innerWidth * 0.75 || rect.height > window.innerHeight * 0.5;
+
   showPanel({
     onCopy: (text) => copyToClipboard(text),
     onRetry: () => retryOcr(),
     onClose: () => { hidePanel(); cancelAreaSelection(); },
   });
+
+  if (isLarge) {
+    console.log('CopyLens Area: 大区域框选，识别结果可能不够准确');
+    showHint('区域较大，识别中...建议缩小框选范围以获得更准确的结果。');
+  }
 
   try {
     console.log('CopyLens Content: 发送 AREA_OCR_REQUEST 给 background');

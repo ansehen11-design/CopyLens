@@ -304,6 +304,21 @@ export function cleanOcrText(rawText: string, language: OcrLanguage): string {
   // 压缩行内连续空格（3 个以上 → 2 个）
   text = text.replace(/[^\S\n]{3,}/g, '  ');
 
+  // 去除明显的 OCR 噪声行（仅含符号、短横线、单个字符的短行）
+  const lines = text.split('\n');
+  const cleaned = lines.filter((line) => {
+    const trimmed = line.trim();
+    if (trimmed.length === 0) return true; // 保留空行
+    if (trimmed.length <= 2 && /^[\s\p{P}\p{S}]+$/u.test(trimmed)) return false; // 纯标点短行
+    if (trimmed.length <= 8 && /^[-=_—─•·.•]+$/.test(trimmed)) return false; // 装饰线
+    return true;
+  });
+  text = cleaned.join('\n');
+
+  // 去除连续重复标点（3 个以上相同标点 → 1 个）
+  text = text.replace(/([，。！？；：、])\1{2,}/g, '$1');
+  text = text.replace(/([.,!?;:])\1{2,}/g, '$1');
+
   if (hasChinese && rawText !== text) {
     console.log('CopyLens OCR: cleanOcrText 已清理中文空格');
     console.log('CopyLens OCR: 原始长度 →', rawText.length, '清洗后长度 →', text.length);
@@ -312,17 +327,36 @@ export function cleanOcrText(rawText: string, language: OcrLanguage): string {
   return text;
 }
 
+/** OCR 识别选项 */
+export interface RecognizeOptions {
+  /** 裁剪区域 CSS 像素宽度，用于 PSM 选择 */
+  cropWidth?: number;
+  cropHeight?: number;
+  /** 视口尺寸 */
+  viewportWidth?: number;
+  viewportHeight?: number;
+}
+
+/**
+ * 根据裁剪区域大小选择合适的 Tesseract PSM（页面分割模式）
+ * - 小块文字区域 → PSM 6（单段均匀文字块）
+ * - 大块复杂区域 → PSM 11（稀疏文字）
+ */
+function selectPsm(cropWidth: number, cropHeight: number): number {
+  const area = cropWidth * cropHeight;
+  if (area < 80000) return 6;   // 小区域：单段文字
+  if (area < 250000) return 3;  // 中等区域：全自动
+  return 11;                     // 大区域：稀疏文字
+}
+
 /**
  * 对图片执行 OCR 识别
- *
- * @param imageSource 图片源（URL、base64 data URL、HTMLImageElement、HTMLCanvasElement 等）
- * @param language OCR 语言
- * @returns 识别出的文字
  */
 export async function recognizeImage(
   imageSource: string | HTMLImageElement | HTMLCanvasElement,
-  language: OcrLanguage
-): Promise<string> {
+  language: OcrLanguage,
+  options?: RecognizeOptions
+): Promise<{ text: string; confidence: number }> {
   console.log('CopyLens OCR: ===== 识别开始 =====');
   console.log('CopyLens OCR: 图片来源类型 →',
     typeof imageSource === 'string'
@@ -333,6 +367,18 @@ export async function recognizeImage(
   const w = await initWorker(language);
 
   try {
+    // 根据裁剪区域选择 PSM
+    const psm = options?.cropWidth
+      ? selectPsm(options.cropWidth, options.cropHeight || options.cropWidth)
+      : 3;
+    console.log(`CopyLens OCR: PSM → ${psm} (crop: ${options?.cropWidth || 'N/A'}×${options?.cropHeight || 'N/A'})`);
+
+    // 设置 Tesseract 参数
+    await w.setParameters({
+      tessedit_pageseg_mode: psm,
+      preserve_interword_spaces: '1',
+    });
+
     const result: RecognizeResult = await withTimeout(
       w.recognize(imageSource),
       OCR_TIMEOUT_MS,
@@ -340,8 +386,9 @@ export async function recognizeImage(
     );
 
     const rawText = result.data.text.trim();
+    const confidence = result.data.confidence || 0;
     console.log(`CopyLens OCR: ===== 识别成功 =====`);
-    console.log(`CopyLens OCR: 原始文字长度 → ${rawText.length} 个字符`);
+    console.log(`CopyLens OCR: 原始文字长度 → ${rawText.length}, 平均置信度 → ${confidence}%`);
     if (rawText.length > 0 && rawText.length < 200) {
       console.log('CopyLens OCR: 原始识别结果 →', rawText);
     }
@@ -349,7 +396,7 @@ export async function recognizeImage(
     // 后处理：清洗中文空格等
     const cleanedText = cleanOcrText(rawText, language);
     console.log(`CopyLens OCR: 清洗后文字长度 → ${cleanedText.length} 个字符`);
-    return cleanedText;
+    return { text: cleanedText, confidence };
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('CopyLens OCR: ===== 识别失败 =====');
