@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# OCR language data (large files, downloaded at build time)
+src/ocr/langdata/*.traineddata
+
+# Logs
+*.log
+npm-debug.log*
+
+# Packages
+*.zip

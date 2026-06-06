@@ -1,0 +1,24 @@
+{
+  "name": "copylens",
+  "version": "1.0.0",
+  "description": "浏览器插件：解除网页复制限制 + 图片文字OCR识别",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "node scripts/generate-icons.js && node scripts/download-ocr-data.js && vite build && vite build --config vite.content.config.ts",
+    "build:code": "vite build",
+    "build:icons": "node scripts/generate-icons.js",
+    "download-ocr-data": "node scripts/download-ocr-data.js",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.270",
+    "@types/node": "^25.9.1",
+    "typescript": "^5.4.0",
+    "vite": "^5.4.0",
+    "vite-plugin-static-copy": "^1.0.0"
+  },
+  "dependencies": {
+    "tesseract.js": "^5.1.0"
+  }
+}
