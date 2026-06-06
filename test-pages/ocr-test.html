@@ -169,12 +169,12 @@
   <!-- ===== 测试 1: 禁止选择的文字 ===== -->
   <section class="test-section">
     <h2>
-      <span class="badge badge-aux">辅助功能</span>
-      测试 1：禁止选择和复制的普通文字
+      <span class="badge badge-primary">主功能</span>
+      测试 1：禁止选择和复制的普通文字（模拟受限页面）
     </h2>
     <p class="description">
       下面这段文字设置了 <code>user-select: none</code>，并阻止了 <code>contextmenu</code>（右键）事件。
-      当你正常的复制和选择功能被网页禁止时，可以启用"解除复制限制"。
+      这段文字的选中和复制被网页禁止了。可以使用框选区域 OCR 来识别。
     </p>
 
     <div class="protected-text" id="protectedText"
@@ -185,17 +185,15 @@
       🔒 这段文字被禁止选择和复制。<br /><br />
       这是一个测试段落。The quick brown fox jumps over the lazy dog.
       你好世界！Hello World！こんにちは。<br /><br />
-      如果你能看到这段文字但无法选中它，请使用 CopyLens 的"解除复制限制"功能。
+      如果你能看到这段文字但无法选中它，请使用 CopyLens 的框选区域 OCR 功能来识别。
     </div>
 
     <div class="instruction">
       <strong>🧪 如何测试：</strong><br />
       1. 尝试用鼠标选中上面的文字 → 应该选不中<br />
-      2. 尝试右键 → 应该被阻止<br />
-      3. 点击 CopyLens 图标 → 展开"高级选项" → 开启"解除复制限制"<br />
-      4. 再次尝试选中文字 → 应该可以选择和复制了<br />
-      <br />
-      <strong>💡 提示：</strong>也可以在框选模式下直接框选这段文字进行 OCR 识别。
+      2. 点击 CopyLens 图标 → 点击"框选识别屏幕文字"<br />
+      3. 拖拽框选这段文字区域 → 等待 OCR 识别<br />
+      4. 查看浮动面板中的识别结果 → 一键复制
     </div>
   </section>
 
@@ -207,7 +205,7 @@
     </h2>
     <p class="description">
       下面两个 Canvas 区域分别绘制了中文和英文文字。这类 Canvas 渲染的文字无法通过
-      DOM 直接获取，也无法通过"解除复制限制"来复制，只能通过"框选区域 OCR"来识别。
+      DOM 直接获取，只能通过"框选区域 OCR"来识别。
     </p>
 
     <div class="canvas-container">
@@ -241,9 +239,7 @@
     </h2>
     <p class="description">
       下面的图片通过 Canvas 动态生成，包含中英文文字。<br />
-      你可以使用两种方式识别：<br />
-      ① <strong>框选区域 OCR</strong>（主功能，推荐）— 框选图片区域<br />
-      ② <strong>图片 OCR 模式</strong>（次功能）— 开启后直接点击图片
+      使用<strong>框选区域 OCR</strong>即可识别图片中的文字。
     </p>
 
     <div class="image-container">
@@ -258,14 +254,9 @@
     </div>
 
     <div class="instruction">
-      <strong>🧪 方式一：框选区域 OCR（推荐）</strong><br />
+      <strong>🧪 如何测试：</strong><br />
       1. 点击 CopyLens → "框选识别屏幕文字" → 拖拽框选图片区域 → 等待识别<br />
-      <br />
-      <strong>🧪 方式二：图片 OCR 模式</strong><br />
-      1. 点击 CopyLens → 开启"图片 OCR 模式"<br />
-      2. 鼠标悬停在图片上 → 看到蓝色高亮边框<br />
-      3. 点击图片 → 等待 OCR 识别<br />
-      4. 如果跨域或非 img 标签，会提示使用框选 OCR<br />
+      2. 查看浮动面板中的识别结果 → 点击复制
     </div>
   </section>
 
@@ -276,11 +267,10 @@
       在实际使用中（如百度文库），页面可能混合使用多种渲染方式：
     </p>
     <ul style="margin-left:20px;color:#475467;font-size:14px;line-height:2;">
-      <li>Canvas 渲染文字 → <strong>只能用框选区域 OCR</strong></li>
-      <li>图片/SVG 文字 → <strong>推荐框选区域 OCR</strong></li>
-      <li>iframe 嵌入文档预览 → <strong>推荐框选区域 OCR</strong></li>
-      <li>真实 DOM 文字被 CSS/JS 禁止选中 → <strong>解除复制限制</strong>（辅助功能）</li>
-      <li>普通 &lt;img&gt; 图片 → <strong>图片 OCR</strong> 或 <strong>框选区域 OCR</strong> 均可</li>
+      <li>Canvas 渲染文字 → <strong>使用框选区域 OCR</strong></li>
+      <li>图片/SVG 文字 → <strong>使用框选区域 OCR</strong></li>
+      <li>iframe 嵌入文档预览 → <strong>使用框选区域 OCR</strong></li>
+      <li>普通 &lt;img&gt; 图片 → <strong>使用框选区域 OCR</strong></li>
     </ul>
     <div class="instruction">
       <strong>📌 总结：</strong>无论页面用了什么渲染方式，只要文字在屏幕上可见，
@@ -392,12 +382,12 @@
 
   generateTestImage('canvasCN', 'testImgCN',
     '📄 中文测试图片',
-    '这是测试图片中的中文文字。\n可以通过框选区域 OCR\n或图片 OCR 模式来识别。'
+    '这是测试图片中的中文文字。\n可以通过框选区域 OCR 来识别。'
   );
 
   generateTestImage('canvasEN', 'testImgEN',
     '📄 English Test Image',
-    'This is English text in a test image.\nYou can use Area Selection OCR\nor Image OCR mode to recognize it.'
+    'This is English text in a test image.\nYou can use Area Selection OCR to recognize it.'
   );
 </script>
 

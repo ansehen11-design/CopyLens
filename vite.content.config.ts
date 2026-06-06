@@ -4,8 +4,8 @@
  * Manifest V3 的 content_scripts 字段只能加载普通 JS 文件，
  * 不支持 ES module import/export 语法。
  *
- * 此配置将 content script 及其所有依赖（unlockCopy、floatingPanel、
- * ocrImageMode、shared/*、ocrEngine、tesseract.js）打包为单个 IIFE 文件，
+ * 此配置将 content script 及其所有依赖（floatingPanel、
+ * areaSelection、shared/*）打包为单个 IIFE 文件，
  * 输出到 dist/contentScript.js。
  *
  * Popup 和 Background Service Worker 由 vite.config.ts 单独构建。

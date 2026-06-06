@@ -2,22 +2,11 @@
  * CopyLens - Content Script 基础样式
  *
  * 在 content script 加载时注入页面。
- * 包含图片 OCR 高亮和解除复制限制的 CSS 基础。
  */
-
-/* ===== 图片 OCR 高亮叠加层 ===== */
-#copylens-img-highlight {
-  transition: all 0.12s ease !important;
-}
-
-/* ===== 复制解锁基础样式 ===== */
-/* unlockCopy.ts 会通过 JS 注入更全面的 user-select 样式 */
-/* 此处作为 CSS 层的基础保障 */
 
 /* ===== 防止 CopyLens 元素被页面样式影响 ===== */
 #copylens-floating-panel,
-#copylens-floating-panel *,
-#copylens-img-highlight {
+#copylens-floating-panel * {
   box-sizing: border-box;
   line-height: normal;
   letter-spacing: normal;

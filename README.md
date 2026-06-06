@@ -51,12 +51,6 @@ CopyLens 是一个 Chromium 系浏览器扩展，用于识别当前网页上用�
 - 自动清理中文空格，保留英文单词正常间距
 - **完全本地识别**，不上传截图或识别内容到任何服务器
 
-### 🖼️ 图片 OCR（次功能）
-
-适合普通 `<img>` 标签的图片。开启后鼠标悬停图片显示蓝色高亮边框，点击即可识别。
-
-**注意：** 如果图片 OCR 一直 loading、识别失败，或页面内容不是 `img` 标签，请使用**框选区域 OCR**。
-
 ---
 
 ## 百度文库等页面的推荐使用方式
@@ -103,7 +97,6 @@ CopyLens/
 │   ├── content/
 │   │   ├── contentScript.ts      # Content Script 主入口
 │   │   ├── areaSelection.ts      # 框选区域 OCR（核心功能）
-│   │   ├── ocrImageMode.ts       # 图片 OCR 交互模块
 │   │   ├── floatingPanel.ts      # OCR 结果浮动面板
 │   │   └── contentStyle.css      # 注入样式
 │   ├── popup/
@@ -183,20 +176,13 @@ npm run build
 test-pages/ocr-test.html
 ```
 
-包含 Canvas 绘制的文字和图片文字，用于测试框选区域 OCR 和图片 OCR。
+包含 Canvas 绘制的文字和图片文字，用于测试框选区域 OCR 功能。
 
 **注意：** 如果用 `file://` 打开，需在 Edge 扩展详情中开启 **"允许访问文件 URL"**。
 
 ---
 
 ## OCR 问题排查
-
-### 图片 OCR 一直 loading
-
-1. 打开 F12 Console，查看 `CopyLens OCR` 日志
-2. 确认 `workerPath`、`corePath`、`langPath` 的 URL 正确
-3. 确认 `dist/ocr/langdata/` 下有语言包文件
-4. 尝试改用**框选区域 OCR**
 
 ### 框选区域 OCR 失败
 
