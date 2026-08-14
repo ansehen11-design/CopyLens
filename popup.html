@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CopyLens</title>
-  <link rel="stylesheet" href="./popup.css" />
+  <link rel="stylesheet" href="./src/popup/popup.css" />
 </head>
 <body>
   <div class="popup-container">
@@ -50,7 +50,7 @@
     <!-- 底部 -->
     <footer class="popup-footer">
       <div class="footer-info">
-        <span class="version">v1.3.0</span>
+        <span class="version">v1.4.0</span>
         <button class="help-btn" id="helpBtn" title="使用说明">❓</button>
       </div>
     </footer>
@@ -66,20 +66,20 @@
       <div class="help-body">
         <div class="help-item">
           <strong>✂️ 框选识别屏幕文字</strong>
-          <p>点击按钮后，在网页上拖拽选择要识别的区域，松开鼠标即可自动截图并 OCR 识别。适合百度文库、道客巴巴、PDF 预览、canvas 渲染、图片中的文字等。OCR 在本地浏览器内运行，不上传任何数据。</p>
+          <p>点击按钮后，插件会截取当前页面可见区域，并在新页面中打开截图。在截图上拖拽选择要识别的区域，即可本地 OCR 识别。适合百度文库、道客巴巴、PDF 预览、canvas 渲染、图片中的文字等。OCR 在本地浏览器内运行，不上传任何数据。</p>
         </div>
         <div class="help-item">
           <strong>⚠️ 注意事项</strong>
           <p>• OCR 在浏览器本地完成，不上传任何数据<br />
              • 首次识别需加载语言包，可能稍慢<br />
-             • 框选区域 OCR 需要截图权限<br />
-             • 百度文库等页面推荐使用框选 OCR<br />
-             • 按 Esc 可取消框选模式</p>
+             • 需要截图权限（activeTab）<br />
+             • 浏览器受保护页面（如扩展管理页）无法截图<br />
+             • 在截图页按 Esc 可取消或关闭</p>
         </div>
       </div>
     </div>
   </div>
 
-  <script type="module" src="./popup.ts"></script>
+  <script type="module" src="./src/popup/popup.ts"></script>
 </body>
 </html>

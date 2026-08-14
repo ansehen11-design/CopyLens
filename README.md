@@ -50,16 +50,17 @@ CopyLens 不依赖网页本身是否支持复制，也不要求文字必须是�
 
 1. 点击 CopyLens 图标。
 2. 点击"框选识别屏幕文字"。
-3. 在网页上拖拽框选要识别的区域。
-4. 等待本地 OCR 识别完成。
-5. 在浮动面板中复制识别结果。
+3. 扩展截取当前页面可见区域，并在新标签页打开截图。
+4. 在截图上拖拽框选要识别的区域。
+5. 等待本地 OCR 识别完成。
+6. 在识别结果面板中复制文字。
 
 特点：
 
 - 本地 OCR 识别，不上传截图、网页内容或识别结果。
 - 支持中文、英文、中英混合识别。
 - 自动清理中文字符之间多余空格。
-- 支持重新识别同一区域。
+- 支持重新选择区域再次识别。
 - 适合学习、阅读、摘录和资料整理场景。
 
 说明：
@@ -74,9 +75,12 @@ CopyLens 只处理用户当前屏幕上已经可见的内容。识别效果会�
 |------|------|
 | TypeScript | 类型安全的全栈开发语言 |
 | Vite 5 | 快速构建工具 |
-| Manifest V3 | Chrome 扩展最新清单版本 |
+| Manifest V3 | Chrome 扩展最新清单版本（无 service worker） |
 | tesseract.js v5 | 浏览器端 OCR 引擎（本地识别，支持中英文） |
-| 原生 HTML/CSS/TS | Popup 和浮动面板（无框架依赖） |
+| IndexedDB | 截图数据在 popup 与识别页之间传递 |
+| 原生 HTML/CSS/TS | Popup 和识别页（无框架依赖） |
+
+**架构说明：** CopyLens 不依赖 background service worker、content script 或 offscreen document。用户点击 popup 后，扩展直接截取当前标签页可见区域，保存到 IndexedDB，再打开扩展自己的识别页面（selector.html）进行框选和本地 OCR。这种方式避免了部分浏览器（如夸克）对 MV3 service worker 支持不完整导致的注册失败问题。
 
 ---
 
@@ -86,31 +90,28 @@ CopyLens 只处理用户当前屏幕上已经可见的内容。识别效果会�
 CopyLens/
 ├── package.json                  # 项目配置和依赖
 ├── tsconfig.json                 # TypeScript 配置
-├── vite.config.ts                # Vite 构建配置 (popup + background)
-├── vite.content.config.ts        # Vite 构建配置 (content script IIFE)
+├── vite.config.ts                # Vite 构建配置 (popup + selector)
 ├── README.md                     # 本文件
 ├── scripts/
 │   ├── generate-icons.js         # 图标生成脚本
 │   └── download-ocr-data.js      # OCR 语言包下载脚本
 ├── public/
-│   ├── manifest.json             # 扩展清单 (Manifest V3)
+│   ├── manifest.json             # 扩展清单 (Manifest V3，无 service worker)
 │   └── icons/                    # 扩展图标 (16/48/128)
+├── popup.html                    # 弹出窗口页面
+├── selector.html                 # 截图框选识别页面
 ├── src/
-│   ├── background/
-│   │   └── serviceWorker.ts      # Service Worker (截图、消息路由)
-│   ├── content/
-│   │   ├── contentScript.ts      # Content Script 主入口
-│   │   ├── areaSelection.ts      # 框选区域 OCR（核心功能）
-│   │   ├── floatingPanel.ts      # OCR 结果浮动面板
-│   │   └── contentStyle.css      # 注入样式
 │   ├── popup/
-│   │   ├── popup.html            # 弹出窗口页面
-│   │   ├── popup.ts              # 弹出窗口逻辑
+│   │   ├── popup.ts              # 弹出窗口逻辑（截图 → 保存 → 打开识别页）
 │   │   └── popup.css             # 弹出窗口样式
+│   ├── selector/
+│   │   ├── selector.ts           # 识别页逻辑（框选 → 裁剪 → 本地 OCR）
+│   │   └── selector.css          # 识别页样式
 │   ├── shared/
 │   │   ├── browserApi.ts         # 浏览器 API 封装层
 │   │   ├── storage.ts            # 设置存储管理
-│   │   ├── messages.ts           # 消息类型定义
+│   │   ├── indexeddb.ts          # 截图数据 IndexedDB 暂存
+│   │   ├── messages.ts           # 消息类型定义（保留，暂未使用）
 │   │   └── constants.ts          # 全局常量
 │   └── ocr/
 │       ├── ocrEngine.ts          # OCR 引擎封装（含文本清洗）
@@ -164,13 +165,11 @@ npm run build
 
 ### 夸克浏览器
 
-夸克浏览器电脑版的扩展支持有限，需要实测。
+> ⚠️ **已知问题：** 夸克浏览器部分版本对 Manifest V3 Service Worker 支持不完整，CopyLens 在夸克浏览器中可能无法正常注册 Service Worker（Status code: 2），导致扩展无法使用。夸克内置 PDF 阅读器及部分页面中可能出现此问题。建议优先使用 Microsoft Edge 或 Chrome。
 
 1. 尝试 `chrome://extensions` 或 `quark://extensions`
 2. 如果能打开扩展管理页面，加载 `CopyLens/dist`
-3. 如果无法打开，当前版本不支持扩展管理
-
-> ⚠️ `chrome.tabs.captureVisibleTab` 和 Web Worker 可能不可用。
+3. 如果 Service Worker 注册失败，当前版本不支持在夸克浏览器中使用
 
 ---
 
@@ -190,10 +189,10 @@ test-pages/ocr-test.html
 
 ### 框选识别失败
 
-1. 确认已授予当前网站的访问权限
-2. 确认当前页面不是浏览器受保护页面（`chrome://`、`edge://` 等）
-3. 如果用 `file://` 打开本地页面，需在扩展详情中开启"允许访问文件 URL"
-4. 按 F12 打开控制台，查看 `CopyLens Area` 和 `CopyLens BG` 日志
+1. 确认当前页面不是浏览器受保护页面（`chrome://`、`edge://`、扩展管理页等）——这些页面无法截图
+2. 如果用 `file://` 打开本地 PDF 或页面，需在扩展详情中开启 **"允许访问文件 URL"**，否则截图会失败
+3. 首次识别需加载语言包，可能稍慢，请重试一次
+4. 按 F12 打开控制台，查看 `CopyLens` 相关日志
 
 ### OCR 识别超时（30 秒）
 
@@ -215,12 +214,12 @@ npm run build:icons  # 仅生成图标
 
 ```
 dist/
-├── manifest.json
-├── background.js              # Service Worker
-├── contentScript.js           # Content Script (IIFE)
-├── src/popup/popup.html       # 弹出窗口
+├── manifest.json              # 无 background、无 offscreen
+├── popup.html                 # 弹出窗口
+├── selector.html              # 截图框选识别页
 ├── assets/
 │   ├── popup.js / popup.css
+│   ├── selector.js / selector.css
 │   └── chunks/
 ├── ocr/
 │   ├── worker.min.js          # tesseract.js Worker
@@ -239,9 +238,10 @@ dist/
 | 权限 | 用途 | 说明 |
 |------|------|------|
 | `activeTab` | 获取当前标签页 + 截图 | 仅在用户点击扩展图标时激活。截图仅用于用户主动框选可见区域进行本地 OCR。 |
-| `scripting` | Content Script 通信 | popup 与页面通信 |
+| `tabs` | 读取当前标签页 URL | 用于检测浏览器受保护页面（如扩展管理页） |
 | `storage` | 保存用户设置 | 本地存储，不上传 |
-| `<all_urls>` (host) | Content Script 匹配所有页面 | 框选 OCR 需要在所有页面生效 |
+
+> 不再需要 `scripting`、`offscreen`、`<all_urls>` 等权限。
 
 ### 不上传任何数据
 

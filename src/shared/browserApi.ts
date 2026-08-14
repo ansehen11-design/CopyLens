@@ -4,20 +4,26 @@
  * 将 chrome.* API 封装到此文件，方便以后适配 Firefox (browser.*)
  * 或其他 Chromium 系浏览器的 API 差异。
  *
- * 当前第一版统一使用 chrome.* API。
- * 如需适配 Firefox，只需在此文件中将 chrome.* 替换为 browser.* 即可。
+ * 关键：模块初始化时不抛出异常。即使 chrome.runtime 不可用，
+ * 也只记录错误并返回一个安全的存根对象，避免页面崩溃。
  */
 
-/**
- * 获取当前浏览器环境是否支持 chrome API
- */
 function getBrowserAPI(): typeof chrome {
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
     return chrome;
   }
-  // 以后适配 Firefox 时:
-  // if (typeof browser !== 'undefined') { return browser; }
-  throw new Error('CopyLens: 当前环境不支持浏览器扩展 API');
+
+  if (typeof chrome !== 'undefined') {
+    return chrome;
+  }
+
+  // 完全不可用（非浏览器扩展环境），返回代理对象
+  return new Proxy({} as typeof chrome, {
+    get(_target, prop: string) {
+      console.error(`CopyLens: 尝试访问 chrome.${prop} 但 chrome 不可用`);
+      return undefined;
+    },
+  });
 }
 
 const browser = getBrowserAPI();
@@ -30,7 +36,11 @@ export default browser;
  * 获取当前活动标签页
  */
 export async function getActiveTab(): Promise<chrome.tabs.Tab> {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  const tabs = browser.tabs;
+  if (!tabs) {
+    throw new Error('CopyLens: chrome.tabs API 不可用');
+  }
+  const [tab] = await tabs.query({ active: true, currentWindow: true });
   if (!tab || !tab.id) {
     throw new Error('无法获取当前标签页');
   }
@@ -38,27 +48,24 @@ export async function getActiveTab(): Promise<chrome.tabs.Tab> {
 }
 
 /**
- * 向当前活动标签页发送消息
+ * 截取当前标签页可见区域
  *
- * @throws 如果标签页不可用、content script 未注入、或消息发送失败
+ * 需要 activeTab 权限（用户点击扩展图标后授予）。
  */
-export async function sendMessageToActiveTab<T = unknown>(
-  message: unknown
-): Promise<T> {
-  const tab = await getActiveTab();
-  if (!tab.id) {
-    throw new Error('无法获取当前标签页。请刷新页面后重试。');
-  }
-
-  return new Promise<T>((resolve, reject) => {
-    browser.tabs.sendMessage(tab.id!, message, (response) => {
-      if (browser.runtime.lastError) {
-        const errMsg = browser.runtime.lastError.message || '未知错误';
-        console.debug('CopyLens: 发送消息到标签页失败:', errMsg);
-        reject(new Error(`无法连接到当前页面 (${errMsg})。\n\n请刷新页面后重试。`));
+export function captureVisibleTab(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.captureVisibleTab(undefined, { format: 'png' }, (dataUrl) => {
+      if (chrome.runtime.lastError) {
+        const err = new Error(chrome.runtime.lastError.message || '截图失败');
+        err.name = 'CaptureVisibleTabError';
+        reject(err);
         return;
       }
-      resolve(response as T);
+      if (!dataUrl) {
+        reject(new Error('截图结果为空，请重试'));
+        return;
+      }
+      resolve(dataUrl);
     });
   });
 }
@@ -110,7 +117,6 @@ export function onStorageChanged(
     }
   };
   browser.storage.onChanged.addListener(listener);
-  // 返回取消监听的函数
   return () => browser.storage.onChanged.removeListener(listener);
 }
 

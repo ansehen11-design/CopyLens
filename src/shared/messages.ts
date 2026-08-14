@@ -71,6 +71,58 @@ export interface OffscreenOcrResultMessage {
   error?: string;
 }
 
+// ========== Popup → Background (截图选择模式) ==========
+
+export interface StartScreenshotSelectionMessage {
+  type: typeof MESSAGE_TYPES.START_SCREENSHOT_SELECTION;
+  language: OcrLanguage;
+}
+
+// ========== 注入脚本 ↔ Background (Tier 1 fallback) ==========
+
+export interface InjectedSelectionDoneMessage {
+  type: typeof MESSAGE_TYPES.INJECTED_SELECTION_DONE;
+  rect: { left: number; top: number; width: number; height: number };
+  viewportWidth: number;
+  viewportHeight: number;
+}
+
+export interface InjectedOcrResultMessage {
+  type: typeof MESSAGE_TYPES.INJECTED_OCR_RESULT;
+  success: boolean;
+  text?: string;
+  error?: string;
+}
+
+// ========== Selector 页面 ↔ Background (Tier 2 fallback) ==========
+
+export interface SelectorReadyMessage {
+  type: typeof MESSAGE_TYPES.SELECTOR_READY;
+}
+
+export interface SelectorInitMessage {
+  type: typeof MESSAGE_TYPES.SELECTOR_INIT;
+  screenshotDataUrl: string;
+  language: OcrLanguage;
+}
+
+export interface SelectorCropOcrMessage {
+  type: typeof MESSAGE_TYPES.SELECTOR_CROP_OCR;
+  /** 图片像素座标（非 viewport CSS 像素） */
+  rect: { left: number; top: number; width: number; height: number };
+  /** 截图原始宽度（用于 offscreen 裁剪座标换算） */
+  imageWidth: number;
+  /** 截图原始高度 */
+  imageHeight: number;
+}
+
+export interface SelectorOcrResultMessage {
+  type: typeof MESSAGE_TYPES.SELECTOR_OCR_RESULT;
+  success: boolean;
+  text?: string;
+  error?: string;
+}
+
 // ========== 联合类型 ==========
 
 /** content script 接收的消息 */
@@ -80,7 +132,12 @@ export type ExtensionMessage =
   | StartAreaSelectionMessage;
 
 /** background 接收的消息 */
-export type BackgroundMessage = StartAreaOcrMessage;
+export type BackgroundMessage =
+  | StartAreaOcrMessage
+  | StartScreenshotSelectionMessage
+  | SelectorReadyMessage
+  | SelectorCropOcrMessage
+  | InjectedSelectionDoneMessage;
 
 /** offscreen 接收的消息 */
 export type OffscreenMessage = OffscreenOcrRequestMessage;

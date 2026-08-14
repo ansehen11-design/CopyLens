@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CopyLens - 截图框选识别</title>
+  <link rel="stylesheet" href="./selector.css" />
+</head>
+<body>
+  <!-- 提示条 -->
+  <div id="hintBanner" class="hint-banner">拖拽选择要识别的区域，按 Esc 取消</div>
+
+  <!-- 截图显示区域 -->
+  <div id="imageContainer" class="image-container">
+    <div id="loadingNotice" class="loading-notice">
+      <div class="spinner"></div>
+      <span>正在加载截图...</span>
+    </div>
+    <img id="screenshotImage" class="screenshot-image" alt="页面截图" style="display:none;" />
+    <!-- 选择框 -->
+    <div id="selectionBox" class="selection-box"></div>
+  </div>
+
+  <!-- 结果面板 -->
+  <div id="resultPanel" class="result-panel" style="display:none;">
+    <div class="panel-header">
+      <span class="panel-title">CopyLens OCR</span>
+      <button id="panelClose" class="panel-close" title="关闭">✕</button>
+    </div>
+    <div class="panel-body">
+      <div id="panelLoading" class="panel-loading">
+        <div class="spinner"></div>
+        <span>正在识别文字...</span>
+      </div>
+      <div id="panelResult" class="panel-result" style="display:none;">
+        <textarea id="resultTextarea" class="result-textarea" readonly placeholder="识别结果将显示在这里..."></textarea>
+        <div id="resultError" class="result-error" style="display:none;"></div>
+      </div>
+    </div>
+    <div id="panelFooter" class="panel-footer" style="display:none;">
+      <button id="btnCopy" class="btn btn-primary">📋 复制到剪贴板</button>
+      <button id="btnRetry" class="btn">🔄 重新选择</button>
+    </div>
+  </div>
+
+  <!-- 页面关闭提示 -->
+  <div id="closeHint" class="close-hint">按 <kbd>Esc</kbd> 或 <button id="btnClosePage">关闭此页面</button></div>
+
+  <script type="module" src="./selector.ts"></script>
+</body>
+</html>
